@@ -1,0 +1,21 @@
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+
+### IntelliJ IDEA ###
+out/
+.idea
+*.iws
+*.iml
+*.ipr
+
+application-*.properties
