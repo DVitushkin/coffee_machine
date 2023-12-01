@@ -1,16 +1,14 @@
 package org.DVitushkin.ingredient;
 
-import org.DVitushkin.machineException.MachineException;
+import org.DVitushkin.customexception.IngredientException;
 
 public class Ingredient {
-    private final String name;
-    private int count;
-    private final int maxCount;
+    protected final String name;
+    protected int count;
 
-    public Ingredient(String name, int count, int maxCount) {
+    public Ingredient(String name, int count) {
         this.name = name;
         this.count = count;
-        this.maxCount = maxCount;
     }
 
     public String getName() {
@@ -21,10 +19,11 @@ public class Ingredient {
         return count;
     }
 
-    public void setCount(int count) throws MachineException {
-        if (count > maxCount || count < 0) {
-            throw new MachineException(String.format("Incorrect count of %s", this.name));
+    public void setCount(int newCount) throws IngredientException {
+        if (newCount < 0) {
+            throw new IngredientException("New count been negative");
         }
-        this.count = count;
+        this.count = newCount;
     }
 }
+
