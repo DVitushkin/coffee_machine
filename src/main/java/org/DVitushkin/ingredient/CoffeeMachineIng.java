@@ -12,16 +12,16 @@ public class CoffeeMachineIng extends Ingredient {
     }
 
     @Override
-    public void setCount(int newCount) throws IngredientException {
-        if (newCount < 0) {
+    public void addCount(int newCount) throws IngredientException {
+        if (this.count + newCount < 0) {
             throw new IngredientException(String.format("New count of <%s> been negative", this.getName()));
-        } else if (newCount > maxVolumeIngredient) {
-            throw new IngredientException(String.format("New count == <%d> of <%s>, been maximum permissible value == <%d>",
-                                                        newCount, 
+        } else if (newCount + this.count  > maxVolumeIngredient) {
+            throw new IngredientException(String.format("Error: New count == <%d> of <%s>, been maximum permissible value == <%d>",
+                                                        newCount + this.count,
                                                         this.getName(), 
                                                         maxVolumeIngredient));
         } else {
-            this.count = newCount;
+            this.count += newCount;
         }
     }
 }

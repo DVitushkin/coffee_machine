@@ -19,11 +19,11 @@ public class Ingredient {
         return count;
     }
 
-    public void setCount(int newCount) throws IngredientException {
+    public void addCount(int newCount) throws IngredientException {
         if (newCount < 0) {
             throw new IngredientException("New count been negative");
         }
-        this.count = newCount;
+        this.count += newCount;
     }
 }
 
