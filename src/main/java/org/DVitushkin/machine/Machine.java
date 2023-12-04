@@ -74,6 +74,12 @@ public class Machine {
         }
     }
 
+    public void showBeverageList() {
+        for (Beverage bvg : this.beverageList) {
+            System.out.printf("%d - %s\n", bvg.getName().ordinal()+1, bvg.getName());
+        }
+    }
+
     private Beverage getBeverageByName(Drink name) {
         for (Beverage beverage : this.beverageList) {
             if (name.equals(beverage.getName())) {
@@ -92,13 +98,10 @@ public class Machine {
         return null;
     }
 
-    private void serveBeverage(Drink name) throws MachineException {
+    private void serveBeverage(Drink name, int cupCount) throws MachineException {
         if (this.cleanliness == 0) {
             throw new MachineException("Sorry but Coffee machine need to be clean");
         }
-
-        System.out.printf("Please enter now many cup of %s, you want\n", name);
-        int cupCount = stream.nextInt();
 
         Beverage beverage = this.getBeverageByName(name);
         for (Ingredient bvIng : beverage.getIngredients()) {
@@ -114,21 +117,22 @@ public class Machine {
         this.cleanliness -= cupCount;
     }
 
-    private void choiceBeverage() throws MachineException {
-        System.out.println("Выберите один из доступных напитков\n");
-        for (Beverage bvg : this.beverageList) {
-            System.out.printf("%d - %s\n", bvg.getName().ordinal()+1, bvg.getName());
-        }
-
-
+    private String choiceBeverage() throws MachineException {
+        System.out.println("Choose one of the available drinks\n");
+        this.showBeverageList();
         int id = stream.nextInt();
         Drink drink = Drink.getDrinkById(id);
 
+        System.out.printf("Please enter now many cup of %s, you want\n", drink);
+        int cupCount = stream.nextInt();
+
         try {
-            this.serveBeverage(drink);
+            this.serveBeverage(drink, cupCount);
         } catch (MachineException e) {
             throw new MachineException(e.getMessage());
         }
+
+        return String.format("a %d of %s", cupCount, drink);
     }
 
     private void handleFunc(int cid) throws MachineException {
@@ -181,20 +185,29 @@ public class Machine {
 
                 logger.info(String.format("To <%s> was added <%d>", "milk", count));
                 break;
-
             case CHECK_SYSTEM:
                 System.out.printf("How is %d cleanliness\n", this.cleanliness);
                 this.showIngredients();
                 break;
-            case CHOICE_BEVERAGE:
-
+            case CLEAN_MACHINE:
                 try {
-                    this.choiceBeverage();
+                    this.cleanMachine();
                 } catch (MachineException e) {
                     sendErrResponse(e);
+                } finally {
+                    logger.info("Machine was cleaned!");
                 }
+                break;
+            case CHOICE_BEVERAGE:
 
-                logger.info(String.format("Was cooked <%s>", "STUB"));
+                String result = "";
+                try {
+                    result = this.choiceBeverage();
+                } catch (MachineException e) {
+                    sendErrResponse(e);
+                } finally {
+                    logger.info(String.format("Was cooked <%s>", result));
+                }
                 break;
             case CREATE_PROFILE:
                 // TODO
@@ -205,8 +218,15 @@ public class Machine {
                 logger.info("Was choice profile ");
                 break;
             case SHOW_RECIPE:
-                // TODO show Bevarge class of choicen recipe
+                System.out.println("Choose one of the available recipes\n");
+                this.showBeverageList();
+                int id = stream.nextInt();
+                Beverage beverage = this.getBeverageByName(Drink.getDrinkById(id));
 
+                System.out.printf("For %s, we need: \n", beverage.getName());
+                for (Ingredient ing : beverage.getIngredients()) {
+                    System.out.printf("* --- %d of %s;\n", ing.getCount(), ing.getName());
+                }
                 logger.info("Was showed recipe");
                 break;
         }
@@ -215,17 +235,18 @@ public class Machine {
 
     private boolean loadMainMenu() {
         System.out.println("""
-                        Кофемашина влкючена
-                        Введите цифру соответсвующей команды:
-                                        1 - Включить|Выключить
-                                        2 - Добавить воду
-                                        3 - Добавить кофе
-                                        4 - Добавить молоко
-                                        5 - Проверка состояния
-                                        6 - выбрать напиток
-                                        7 - Создать профиль
-                                        8 - Выбрать профиль
-                                        9 - Список рецептов
+                        Coffee machine is on
+                        Enter the number of the corresponding command:
+                                        1 - On|Off
+                                        2 - Add water
+                                        3 - Add coffee
+                                        4 - Add milk
+                                        5 - Check system
+                                        6-  Clean the machine
+                                        7 - Choice beverage
+                                        8 - Create profile
+                                        9 - Choice profile
+                                        10 - Show recipe
                         """
         );
 
@@ -239,7 +260,7 @@ public class Machine {
         return this.onOffButton;
     }
 
-    public void entryPoint() throws MachineException {
+    public void entryPoint() {
         try {
             this.greeting();
         } catch (MachineException e) {

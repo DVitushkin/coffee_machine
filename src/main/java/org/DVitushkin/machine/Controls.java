@@ -6,10 +6,11 @@ public enum Controls {
     ADD_COFFEE(3),
     ADD_MILK(4),
     CHECK_SYSTEM(5),
-    CHOICE_BEVERAGE(6),
-    CREATE_PROFILE(7),
-    CHOICE_PROFILE(8),
-    SHOW_RECIPE(9);
+    CLEAN_MACHINE(6),
+    CHOICE_BEVERAGE(7),
+    CREATE_PROFILE(8),
+    CHOICE_PROFILE(9),
+    SHOW_RECIPE(10);
 
     private final int cid;
 
