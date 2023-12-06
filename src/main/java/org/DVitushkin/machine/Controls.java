@@ -8,9 +8,12 @@ public enum Controls {
     CHECK_SYSTEM(5),
     CLEAN_MACHINE(6),
     CHOICE_BEVERAGE(7),
-    CREATE_PROFILE(8),
-    CHOICE_PROFILE(9),
-    SHOW_RECIPE(10);
+    SHOW_RECIPE(8),
+    CREATE_PROFILE(9),
+    CHOICE_PROFILE(10),
+    MAKE_ESPRESSO(11),
+    MAKE_CAPPUCCINO(12),
+    EXIT_PROFILE(13);
 
     private final int cid;
 

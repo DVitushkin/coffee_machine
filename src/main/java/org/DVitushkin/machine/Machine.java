@@ -1,33 +1,62 @@
 package org.DVitushkin.machine;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.DVitushkin.beverage.Beverage;
 import org.DVitushkin.customexception.IngredientException;
+import org.DVitushkin.customexception.ProfileException;
 import org.DVitushkin.ingredient.CoffeeMachineIng;
 import org.DVitushkin.ingredient.Ingredient;
 import org.DVitushkin.customexception.MachineException;
+import org.DVitushkin.profile.Profile;
 
-import java.util.List;
-import java.util.Scanner;
-import java.util.logging.Logger;
 
 public class Machine {
     private final List<CoffeeMachineIng> ingredientList;
     private final List<Beverage> beverageList;
+    private final List<Profile> profiles;
 
-    private static final Scanner stream;
-    private static final Logger logger;
+    private static final Scanner stream = new Scanner(System.in);
+    private static final Logger logger = LogManager.getLogger();
 
     private int cleanliness;
     private boolean onOffButton;
+    private Profile activeProfile;
 
-    static {
-        stream = new Scanner(System.in);
-        logger = Logger.getLogger("Coffee Machine");
+    private final String DEFAULT_MENU = """
+            
+                                    Coffee machine is on
+                                    Enter the number of the corresponding command:
+                                                    1 - On|Off
+                                                    2 - Add water
+                                                    3 - Add coffee
+                                                    4 - Add milk
+                                                    5 - Check system
+                                                    6-  Clean the machine
+                                                    7 - Choice beverage
+                                                    8 - Show recipe
+                                                    9 - Create profile
+                                                    10 - Choice profile
+                                        """;
+
+    public Machine(List<CoffeeMachineIng> ingredientList, List<Beverage> beverageList, List<Profile> profiles, int cleanlinessCount) {
+        this.ingredientList = ingredientList;
+        this.beverageList = beverageList;
+        this.profiles = profiles;
+
+        this.cleanliness = cleanlinessCount;
+        this.onOffButton = false;
     }
 
     public Machine(List<CoffeeMachineIng> ingredientList, List<Beverage> beverageList, int cleanlinessCount) {
         this.ingredientList = ingredientList;
         this.beverageList = beverageList;
+        this.profiles = new ArrayList<>();
 
         this.cleanliness = cleanlinessCount;
         this.onOffButton = false;
@@ -74,12 +103,6 @@ public class Machine {
         }
     }
 
-    public void showBeverageList() {
-        for (Beverage bvg : this.beverageList) {
-            System.out.printf("%d - %s\n", bvg.getName().ordinal()+1, bvg.getName());
-        }
-    }
-
     private Beverage getBeverageByName(Drink name) {
         for (Beverage beverage : this.beverageList) {
             if (name.equals(beverage.getName())) {
@@ -117,12 +140,7 @@ public class Machine {
         this.cleanliness -= cupCount;
     }
 
-    private String choiceBeverage() throws MachineException {
-        System.out.println("Choose one of the available drinks\n");
-        this.showBeverageList();
-        int id = stream.nextInt();
-        Drink drink = Drink.getDrinkById(id);
-
+    private String adapterServeBeverage(Drink drink) throws MachineException {
         System.out.printf("Please enter now many cup of %s, you want\n", drink);
         int cupCount = stream.nextInt();
 
@@ -135,54 +153,151 @@ public class Machine {
         return String.format("a %d of %s", cupCount, drink);
     }
 
+    private String choiceBeverage() throws MachineException {
+        Drink drink;
+        try {
+            drink = this.getUserPickBeverage(this.activeProfile);
+        } catch (MachineException e) {
+            throw new MachineException(e.getMessage());
+        }
+        return this.adapterServeBeverage(drink);
+    }
+
+    private Drink getUserPickBeverage(Profile profile) throws MachineException {
+        System.out.println("Choose one of the available recipe\n");
+
+        for (Beverage bvg : this.beverageList) {
+            if (profile != null) {
+                if (profile.isBeverageAtList(bvg)) {
+                    continue;
+                }
+            }
+
+            System.out.printf("%d - %s\n", bvg.getName().ordinal()+1, bvg.getName());
+        }
+
+        int id = stream.nextInt();
+        try {
+            return Drink.getDrinkById(id);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new MachineException(e.getMessage());
+        }
+    }
+
+    private void addBeverageToProfile(Profile newProfile) throws MachineException {
+        Drink drink;
+        try {
+            drink = this.getUserPickBeverage(newProfile);
+        } catch (MachineException e) {
+            throw new MachineException(e.getMessage());
+        }
+        Beverage beverage = this.getBeverageByName(drink);
+
+        try {
+            newProfile.addBeverage(beverage);
+        } catch (ProfileException e) {
+            throw new MachineException(e.getMessage());
+        }
+    }
+
+    private void createProfile() throws MachineException {
+        System.out.println("Enter name for profile");
+        String name = stream.nextLine();
+        name = stream.nextLine();
+
+        Profile newProfile = new Profile(name);
+        try {
+            this.addBeverageToProfile(newProfile);
+        } catch (MachineException e) {
+            throw new MachineException(e.getMessage());
+        }
+        this.profiles.add(newProfile);
+
+
+        int counter = this.beverageList.size() -1;
+        while ( counter != 0) {
+            System.out.println("Do you want to add another one?\n1 - YES\n2 - NO");
+            int cmd = stream.nextInt();
+            switch (cmd) {
+                case 1:
+                    try {
+                        this.addBeverageToProfile(newProfile);
+                        counter--;
+                    } catch (MachineException e) {
+                        throw new MachineException(e.getMessage());
+                    }
+                    break;
+                case 2:
+                    counter = 0;
+                    break;
+                default:
+                    throw new MachineException("Was sent incorrect command");
+            }
+        }
+    }
+
+    private void showProfileList() {
+        for (int i = 0; i < this.profiles.size(); i++) {
+            System.out.printf("%d - %s\n", (i+1), profiles.get(i).getName());
+        }
+    }
+
+    private void showRecipes() throws MachineException {
+        Drink userPick;
+        try {
+            userPick = this.getUserPickBeverage(this.activeProfile);
+        } catch (MachineException e) {
+            throw new MachineException(e.getMessage());
+        }
+
+        Beverage beverage = this.getBeverageByName(userPick);
+
+        System.out.printf("For %s, we need: \n", beverage.getName());
+        for (Ingredient ing : beverage.getIngredients()) {
+            System.out.printf("* --- %d of %s;\n", ing.getCount(), ing.getName());
+        }
+    }
+
     private void handleFunc(int cid) throws MachineException {
         Controls cmd = Controls.getCommandByCid(cid);
         if (cmd == null) {
             throw new MachineException(String.format("Was entered incorrect command: <%d>", cid));
         }
 
-        int count; // ?????
+        int count;
         switch (cmd) {
             case START_MACHINE:
                 this.switchOnOf();
-
                 logger.info("Button was pushed");
                 break;
             case ADD_WATER:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
-
                 try {
                     this.addIngredients("water", count);
                 } catch (MachineException e) {
                     sendErrResponse(e);
-
                 }
-
                 logger.info(String.format("To <%s> was added <%d>", "water", count));
                 break;
             case ADD_COFFEE:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
-
                 try {
                     this.addIngredients("coffee", count);
                 } catch (MachineException e) {
                     sendErrResponse(e);
                 }
-
                 logger.info(String.format("To <%s> was added <%d>", "coffee", count));
                 break;
             case ADD_MILK:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
-
                 try {
                     this.addIngredients("milk", count);
                 } catch (MachineException e) {
                     sendErrResponse(e);
                 }
-
                 logger.info(String.format("To <%s> was added <%d>", "milk", count));
                 break;
             case CHECK_SYSTEM:
@@ -199,7 +314,6 @@ public class Machine {
                 }
                 break;
             case CHOICE_BEVERAGE:
-
                 String result = "";
                 try {
                     result = this.choiceBeverage();
@@ -209,46 +323,67 @@ public class Machine {
                     logger.info(String.format("Was cooked <%s>", result));
                 }
                 break;
-            case CREATE_PROFILE:
-                // TODO
-                logger.info("Was created profile");
-                break;
-            case CHOICE_PROFILE:
-                // TODO
-                logger.info("Was choice profile ");
-                break;
             case SHOW_RECIPE:
-                System.out.println("Choose one of the available recipes\n");
-                this.showBeverageList();
-                int id = stream.nextInt();
-                Beverage beverage = this.getBeverageByName(Drink.getDrinkById(id));
-
-                System.out.printf("For %s, we need: \n", beverage.getName());
-                for (Ingredient ing : beverage.getIngredients()) {
-                    System.out.printf("* --- %d of %s;\n", ing.getCount(), ing.getName());
-                }
+                this.showRecipes();
                 logger.info("Was showed recipe");
                 break;
+            case CREATE_PROFILE:
+                try {
+                    this.createProfile();
+                } catch (MachineException e) {
+                    sendErrResponse(e);
+                } finally {
+                    logger.info("Was created profile");
+                }
+                break;
+            case CHOICE_PROFILE: // here
+                System.out.println("Choose one of the available profile\n");
+                this.showProfileList();
+                int profileId = stream.nextInt();
+                this.activeProfile = this.profiles.get(profileId - 1);
+                logger.info(String.format("Was choice profile <%s>", this.activeProfile.getName()));
+                break;
+            case MAKE_ESPRESSO:
+                result = "";
+                try {
+                    result = this.adapterServeBeverage(Drink.ESPRESSO);
+                } catch (MachineException e) {
+                    sendErrResponse(e);
+                } finally {
+                    logger.info(String.format("Was cooked <%s>", result));
+                }
+                break;
+            case MAKE_CAPPUCCINO:
+                result = "";
+                try {
+                    result = this.adapterServeBeverage(Drink.CAPPUCCINO);
+                } catch (MachineException e) {
+                    sendErrResponse(e);
+                } finally {
+                    logger.info(String.format("Was cooked <%s>", result));
+                }
+                break;
+            case EXIT_PROFILE:
+                this.activeProfile = null;
         }
+    }
 
+    private void loadProfileMenu() {
+        System.out.println("Enter the number of the corresponding command: ");
+        for (Beverage beverage : this.beverageList) {
+            if (this.activeProfile.isBeverageAtList(beverage)) {
+                System.out.printf("%d - %s\n", (11+beverage.getName().ordinal()), beverage.getName());
+            }
+        }
+        System.out.println("13 - Exit profile\n");
     }
 
     private boolean loadMainMenu() {
-        System.out.println("""
-                        Coffee machine is on
-                        Enter the number of the corresponding command:
-                                        1 - On|Off
-                                        2 - Add water
-                                        3 - Add coffee
-                                        4 - Add milk
-                                        5 - Check system
-                                        6-  Clean the machine
-                                        7 - Choice beverage
-                                        8 - Create profile
-                                        9 - Choice profile
-                                        10 - Show recipe
-                        """
-        );
+        if (this.activeProfile != null) {
+            this.loadProfileMenu();
+        } else {
+            System.out.println(DEFAULT_MENU);
+        }
 
         int cid = stream.nextInt();
         try {
@@ -256,7 +391,6 @@ public class Machine {
         } catch (MachineException e) {
             System.out.println(e.getMessage());
         }
-
         return this.onOffButton;
     }
 
