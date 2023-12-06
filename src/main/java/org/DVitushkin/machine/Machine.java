@@ -2,6 +2,7 @@ package org.DVitushkin.machine;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,7 +30,6 @@ public class Machine {
     private Profile activeProfile;
 
     private final String DEFAULT_MENU = """
-            
                                     Coffee machine is on
                                     Enter the number of the corresponding command:
                                                     1 - On|Off
@@ -44,15 +44,6 @@ public class Machine {
                                                     10 - Choice profile
                                         """;
 
-    public Machine(List<CoffeeMachineIng> ingredientList, List<Beverage> beverageList, List<Profile> profiles, int cleanlinessCount) {
-        this.ingredientList = ingredientList;
-        this.beverageList = beverageList;
-        this.profiles = profiles;
-
-        this.cleanliness = cleanlinessCount;
-        this.onOffButton = false;
-    }
-
     public Machine(List<CoffeeMachineIng> ingredientList, List<Beverage> beverageList, int cleanlinessCount) {
         this.ingredientList = ingredientList;
         this.beverageList = beverageList;
@@ -60,6 +51,15 @@ public class Machine {
 
         this.cleanliness = cleanlinessCount;
         this.onOffButton = false;
+    }
+
+    private void switchOnOf() {
+        this.onOffButton = !this.onOffButton;
+    }
+
+    private static void sendErrResponse(MachineException errMsg) {
+        System.out.printf("Sorry but something was wrong:\n %s", errMsg.getMessage());
+        logger.error(errMsg.getMessage());
     }
 
     private void greeting() throws MachineException {
@@ -72,14 +72,6 @@ public class Machine {
         }
     }
 
-    private void switchOnOf() {
-        this.onOffButton = !this.onOffButton;
-    }
-
-    private static void sendErrResponse(MachineException errMsg) {
-        System.out.printf("Sorry but something was wrong:\n %s", errMsg.getMessage());
-    }
-
     private void cleanMachine() throws MachineException {
         if (this.cleanliness == 10) {
             throw new MachineException("Machine has already cleaned");
@@ -88,7 +80,7 @@ public class Machine {
         this.cleanliness = 10;
     }
 
-    public void addIngredients(String name, int count) throws MachineException {
+    private void addIngredients(String name, int count) throws MachineException {
         Ingredient ing = this.getIngredientByName(name);
         try {
             ing.addCount(count);
@@ -97,25 +89,25 @@ public class Machine {
         }
     }
 
-    public void showIngredients() {
+    private void showIngredients() {
         for (Ingredient ing : this.ingredientList) {
             System.out.printf("%s == %d%n", ing.getName(), ing.getCount());
         }
-    }
-
-    private Beverage getBeverageByName(Drink name) {
-        for (Beverage beverage : this.beverageList) {
-            if (name.equals(beverage.getName())) {
-                return beverage;
-            }
-        }
-        return null;
     }
 
     private Ingredient getIngredientByName(String name) {
         for (Ingredient ingredient : this.ingredientList) {
             if (name.equals(ingredient.getName())) {
                 return ingredient;
+            }
+        }
+        return null;
+    }
+
+    private Beverage getBeverageByName(Drink name) {
+        for (Beverage beverage : this.beverageList) {
+            if (name.equals(beverage.getName())) {
+                return beverage;
             }
         }
         return null;
@@ -141,7 +133,7 @@ public class Machine {
     }
 
     private String adapterServeBeverage(Drink drink) throws MachineException {
-        System.out.printf("Please enter now many cup of %s, you want\n", drink);
+        System.out.printf("Please enter now many cup of %s you want\nOr press <3> to make 3 cup of %s\n", drink, drink);
         int cupCount = stream.nextInt();
 
         try {
@@ -149,7 +141,6 @@ public class Machine {
         } catch (MachineException e) {
             throw new MachineException(e.getMessage());
         }
-
         return String.format("a %d of %s", cupCount, drink);
     }
 
@@ -172,7 +163,6 @@ public class Machine {
                     continue;
                 }
             }
-
             System.out.printf("%d - %s\n", bvg.getName().ordinal()+1, bvg.getName());
         }
 
@@ -212,7 +202,6 @@ public class Machine {
             throw new MachineException(e.getMessage());
         }
         this.profiles.add(newProfile);
-
 
         int counter = this.beverageList.size() -1;
         while ( counter != 0) {
@@ -258,14 +247,15 @@ public class Machine {
         }
     }
 
-    private void handleFunc(int cid) throws MachineException {
+    private void handleFunc(int cid) {
         Controls cmd = Controls.getCommandByCid(cid);
         if (cmd == null) {
-            throw new MachineException(String.format("Was entered incorrect command: <%d>", cid));
+            sendErrResponse(new MachineException(String.format("Was entered incorrect command: <%d>", cid)));
         }
 
         int count;
-        switch (cmd) {
+        String result = "";
+        switch (Objects.requireNonNull(cmd)) {
             case START_MACHINE:
                 this.switchOnOf();
                 logger.info("Button was pushed");
@@ -275,30 +265,30 @@ public class Machine {
                 count = stream.nextInt();
                 try {
                     this.addIngredients("water", count);
+                    logger.info(String.format("To <%s> was added <%d>", "water", count));
                 } catch (MachineException e) {
                     sendErrResponse(e);
                 }
-                logger.info(String.format("To <%s> was added <%d>", "water", count));
                 break;
             case ADD_COFFEE:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
                 try {
                     this.addIngredients("coffee", count);
+                    logger.info(String.format("To <%s> was added <%d>", "coffee", count));
                 } catch (MachineException e) {
                     sendErrResponse(e);
                 }
-                logger.info(String.format("To <%s> was added <%d>", "coffee", count));
                 break;
             case ADD_MILK:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
                 try {
                     this.addIngredients("milk", count);
+                    logger.info(String.format("To <%s> was added <%d>", "milk", count));
                 } catch (MachineException e) {
                     sendErrResponse(e);
                 }
-                logger.info(String.format("To <%s> was added <%d>", "milk", count));
                 break;
             case CHECK_SYSTEM:
                 System.out.printf("How is %d cleanliness\n", this.cleanliness);
@@ -307,33 +297,33 @@ public class Machine {
             case CLEAN_MACHINE:
                 try {
                     this.cleanMachine();
+                    logger.info("Machine was cleaned!");
                 } catch (MachineException e) {
                     sendErrResponse(e);
-                } finally {
-                    logger.info("Machine was cleaned!");
                 }
                 break;
             case CHOICE_BEVERAGE:
-                String result = "";
                 try {
                     result = this.choiceBeverage();
+                    logger.info(String.format("Was cooked <%s>", result));
                 } catch (MachineException e) {
                     sendErrResponse(e);
-                } finally {
-                    logger.info(String.format("Was cooked <%s>", result));
                 }
                 break;
             case SHOW_RECIPE:
-                this.showRecipes();
-                logger.info("Was showed recipe");
+                try {
+                    this.showRecipes();
+                    logger.info("Was showed recipe");
+                } catch (MachineException e) {
+                    sendErrResponse(e);
+                }
                 break;
             case CREATE_PROFILE:
                 try {
                     this.createProfile();
+                    logger.info("Was created profile");
                 } catch (MachineException e) {
                     sendErrResponse(e);
-                } finally {
-                    logger.info("Was created profile");
                 }
                 break;
             case CHOICE_PROFILE: // here
@@ -344,27 +334,24 @@ public class Machine {
                 logger.info(String.format("Was choice profile <%s>", this.activeProfile.getName()));
                 break;
             case MAKE_ESPRESSO:
-                result = "";
                 try {
                     result = this.adapterServeBeverage(Drink.ESPRESSO);
+                    logger.info(String.format("Was cooked <%s>", result));
                 } catch (MachineException e) {
                     sendErrResponse(e);
-                } finally {
-                    logger.info(String.format("Was cooked <%s>", result));
                 }
                 break;
             case MAKE_CAPPUCCINO:
-                result = "";
                 try {
                     result = this.adapterServeBeverage(Drink.CAPPUCCINO);
+                    logger.info(String.format("Was cooked <%s>", result));
                 } catch (MachineException e) {
                     sendErrResponse(e);
-                } finally {
-                    logger.info(String.format("Was cooked <%s>", result));
                 }
                 break;
             case EXIT_PROFILE:
                 this.activeProfile = null;
+                break;
         }
     }
 
@@ -386,11 +373,8 @@ public class Machine {
         }
 
         int cid = stream.nextInt();
-        try {
-            this.handleFunc(cid);
-        } catch (MachineException e) {
-            System.out.println(e.getMessage());
-        }
+        this.handleFunc(cid);
+
         return this.onOffButton;
     }
 
