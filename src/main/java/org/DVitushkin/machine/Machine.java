@@ -9,12 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.DVitushkin.beverage.Beverage;
+import org.DVitushkin.ingredient.Ingredient;
+import org.DVitushkin.ingredient.CoffeeMachineIng;
+import org.DVitushkin.profile.Profile;
+import org.DVitushkin.customexception.MachineException;
 import org.DVitushkin.customexception.IngredientException;
 import org.DVitushkin.customexception.ProfileException;
-import org.DVitushkin.ingredient.CoffeeMachineIng;
-import org.DVitushkin.ingredient.Ingredient;
-import org.DVitushkin.customexception.MachineException;
-import org.DVitushkin.profile.Profile;
 
 
 public class Machine {
