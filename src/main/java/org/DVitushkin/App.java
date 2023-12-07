@@ -1,11 +1,12 @@
 package org.DVitushkin;
 
-import org.DVitushkin.customexception.MachineException;
+import org.DVitushkin.machine.BeverageService;
+import org.DVitushkin.beverage.Beverage;
+import org.DVitushkin.machine.CoffeeIngredientService;
 import org.DVitushkin.ingredient.CoffeeMachineIng;
+import org.DVitushkin.ingredient.Ingredient;
 import org.DVitushkin.machine.Drink;
 import org.DVitushkin.machine.Machine;
-import org.DVitushkin.beverage.Beverage;
-import org.DVitushkin.ingredient.Ingredient;
 
 import java.util.ArrayList;
 
@@ -42,9 +43,9 @@ public class App
         return new Beverage(Drink.CAPPUCCINO, ingredients);
     }
 
-    public static void main( String[] args ) throws MachineException {
-        ArrayList<CoffeeMachineIng> ingList = App.collectIngList();
-        ArrayList<Beverage> bvgList = App.collectBvgList();
+    public static void main( String[] args ) {
+        CoffeeIngredientService ingList = new CoffeeIngredientService(App.collectIngList());
+        BeverageService bvgList = new BeverageService(App.collectBvgList());
         Machine mc = new Machine(ingList, bvgList, 10);
 
         mc.entryPoint();
