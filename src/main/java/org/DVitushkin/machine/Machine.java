@@ -101,7 +101,7 @@ public class Machine {
                 return ingredient;
             }
         }
-        return null;
+        return new Ingredient(name, 0);
     }
 
     private Beverage getBeverageByName(Drink name) {
@@ -110,7 +110,7 @@ public class Machine {
                 return beverage;
             }
         }
-        return null;
+        return new Beverage(name, null);
     }
 
     private void serveBeverage(Drink name, int cupCount) throws MachineException {
@@ -119,6 +119,11 @@ public class Machine {
         }
 
         Beverage beverage = this.getBeverageByName(name);
+        List<Ingredient> bvgIng = beverage.getIngredients();
+        if (bvgIng == null) {
+            throw new MachineException(String.format("Ingredient list of <%s> beverage is empty", beverage.getName()));
+        }
+
         for (Ingredient bvIng : beverage.getIngredients()) {
             Ingredient cmIng = this.getIngredientByName(bvIng.getName());
 
@@ -182,6 +187,10 @@ public class Machine {
             throw new MachineException(e.getMessage());
         }
         Beverage beverage = this.getBeverageByName(drink);
+        List<Ingredient> bvgIng = beverage.getIngredients();
+        if (bvgIng == null) {
+            throw new MachineException(String.format("Ingredient list of <%s> beverage is empty", beverage.getName()));
+        }
 
         try {
             newProfile.addBeverage(beverage);
@@ -240,6 +249,10 @@ public class Machine {
         }
 
         Beverage beverage = this.getBeverageByName(userPick);
+        List<Ingredient> bvgIng = beverage.getIngredients();
+        if (bvgIng == null) {
+            throw new MachineException(String.format("Ingredient list of <%s> beverage is empty", beverage.getName()));
+        }
 
         System.out.printf("For %s, we need: \n", beverage.getName());
         for (Ingredient ing : beverage.getIngredients()) {
