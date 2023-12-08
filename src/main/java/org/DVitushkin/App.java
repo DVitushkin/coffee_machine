@@ -10,8 +10,7 @@ import org.DVitushkin.machine.Machine;
 
 import java.util.ArrayList;
 
-public class App 
-{
+public class App {
     private static ArrayList<CoffeeMachineIng> collectIngList(){
         ArrayList<CoffeeMachineIng> ingList = new ArrayList<CoffeeMachineIng>();
         ingList.add(new CoffeeMachineIng("water", 200, 200));
