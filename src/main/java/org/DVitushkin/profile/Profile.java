@@ -30,13 +30,15 @@ public class Profile {
         return cupCount;
     }
 
-    public void addBeverage(Beverage newBvg) throws ProfileException {
+    public boolean addBeverage(Beverage newBvg) {
         for (Beverage bvg : this.pinnedBeverage) {
             if (bvg.equals(newBvg)) {
-                throw new ProfileException(String.format("<%s> already added to bvg list of this profile", newBvg.getName()));
+                System.out.printf("You already add <%s> to profile\n", bvg.getName());
+                return false;
             }
         }
         this.pinnedBeverage.add(newBvg);
+        return true;
     }
 
     public boolean isBeverageAtList(Beverage externalBvg) {

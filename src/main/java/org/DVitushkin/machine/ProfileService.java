@@ -6,6 +6,7 @@ import org.DVitushkin.customexception.ProfileException;
 import org.DVitushkin.ingredient.Ingredient;
 import org.DVitushkin.profile.Profile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -48,7 +49,8 @@ public class ProfileService {
         try {
             return Drink.getDrinkById(id);
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw new MachineException(e.getMessage());
+            System.out.println("Was input incorrect button try again");
+            return this.getProfileUserPickBeverage(profile, beverageList);
         }
     }
 
@@ -64,11 +66,10 @@ public class ProfileService {
         if (bvgIng == null) {
             throw new ProfileException(String.format("Ingredient list of <%s> beverage is empty", beverage.getName()));
         }
-
-        try {
-            newProfile.addBeverage(beverage);
-        } catch (ProfileException e) {
-            throw new ProfileException(e.getMessage());
+        
+        var result = newProfile.addBeverage(beverage);
+        if (!result) {
+            addBeverageToProfile(newProfile, beverageList);
         }
     }
 
