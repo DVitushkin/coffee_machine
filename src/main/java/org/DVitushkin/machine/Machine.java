@@ -6,11 +6,11 @@ import java.util.Objects;
 import java.util.Scanner;
 
 import org.DVitushkin.customexception.ProfileException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import org.DVitushkin.beverage.Beverage;
 import org.DVitushkin.ingredient.Ingredient;
+import org.DVitushkin.loghistory.LogHistory;
+import org.DVitushkin.loghistory.LogLvls;
 import org.DVitushkin.profile.Profile;
 import org.DVitushkin.customexception.MachineException;
 import org.DVitushkin.customexception.IngredientException;
@@ -21,7 +21,7 @@ public class Machine {
     private final ProfileService profiles;
 
     private static final Scanner stream = new Scanner(System.in);
-    private static final Logger logger = LogManager.getLogger();
+    private final LogHistory logger = new LogHistory();
 
     private int cleanliness;
     private boolean onOffButton;
@@ -40,6 +40,7 @@ public class Machine {
                                                     8 - Show recipe
                                                     9 - Create profile
                                                     10 - Choice profile
+                                                    11 - Show history
                                         """;
 
     public Machine(CoffeeIngredientService ingredientList, BeverageService beverageList, int cleanlinessCount) {
@@ -55,10 +56,7 @@ public class Machine {
         this.onOffButton = !this.onOffButton;
     }
 
-    private static void sendErrResponse(Exception errMsg) {
-        System.out.printf("Sorry but something was wrong:\n %s", errMsg.getMessage());
-        logger.error(errMsg.getMessage());
-    }
+
 
     private void greeting() throws MachineException {
         System.out.println("Greeting!\n1 - On|Off");
@@ -103,8 +101,14 @@ public class Machine {
     }
 
     private String adapterServeBeverage(Drink drink) throws MachineException {
-        System.out.printf("Please enter now many cup of %s you want\nOr press <3> to make 3 cup of %s\n", drink, drink);
-        int cupCount = stream.nextInt();
+        int cupCount;
+        if (this.activeProfile == null) {
+            System.out.printf("Please enter now many cup of %s you want\nOr press <3> to make 3 cup of %s\n", drink, drink);
+            cupCount = stream.nextInt();
+        } else {
+            cupCount = this.activeProfile.getCupCount();
+        }
+
 
         try {
             this.serveBeverage(drink, cupCount);
@@ -147,7 +151,7 @@ public class Machine {
     private void handleFunc(int cid) {
         Controls cmd = Controls.getCommandByCid(cid);
         if (cmd == null) {
-            sendErrResponse(new MachineException(String.format("Was entered incorrect command: <%d>", cid)));
+            this.logger.sendErrResponse(new MachineException(String.format("Was entered incorrect command: <%d>", cid)));
         }
 
         int count;
@@ -155,16 +159,16 @@ public class Machine {
         switch (Objects.requireNonNull(cmd)) {
             case START_MACHINE:
                 this.switchOnOf();
-                logger.info("Button was pushed");
+                this.logger.saveLog(LogLvls.INFO, "Button was pushed");
                 break;
             case ADD_WATER:
                 System.out.println("Please enter count of ingredient");
                 count = stream.nextInt();
                 try {
                     this.ingredientList.addIngredients("water", count);
-                    logger.info(String.format("To <%s> was added <%d>", "water", count));
+                    this.logger.saveLog(LogLvls.INFO, String.format("To <%s> was added <%d>", "water", count));
                 } catch (IngredientException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case ADD_COFFEE:
@@ -172,9 +176,9 @@ public class Machine {
                 count = stream.nextInt();
                 try {
                     this.ingredientList.addIngredients("coffee", count);
-                    logger.info(String.format("To <%s> was added <%d>", "coffee", count));
+                    this.logger.saveLog(LogLvls.INFO, String.format("To <%s> was added <%d>", "coffee", count));
                 } catch (IngredientException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case ADD_MILK:
@@ -182,9 +186,9 @@ public class Machine {
                 count = stream.nextInt();
                 try {
                     this.ingredientList.addIngredients("milk", count);
-                    logger.info(String.format("To <%s> was added <%d>", "milk", count));
+                    this.logger.saveLog(LogLvls.INFO, String.format("To <%s> was added <%d>", "milk", count));
                 } catch (IngredientException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case CHECK_SYSTEM:
@@ -194,33 +198,33 @@ public class Machine {
             case CLEAN_MACHINE:
                 try {
                     this.cleanMachine();
-                    logger.info("Machine was cleaned!");
+                    this.logger.saveLog(LogLvls.INFO,"Machine was cleaned!");
                 } catch (MachineException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case CHOICE_BEVERAGE:
                 try {
                     result = this.choiceBeverage();
-                    logger.info(String.format("Was cooked <%s>", result));
+                    this.logger.saveLog(LogLvls.INFO, String.format("Was cooked <%s>", result));
                 } catch (MachineException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case SHOW_RECIPE:
                 try {
                     this.showRecipes();
-                    logger.info("Was showed recipe");
+                    this.logger.saveLog(LogLvls.INFO,"Was showed recipe");
                 } catch (MachineException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case CREATE_PROFILE:
                 try {
                     this.profiles.createProfile(this.beverageList);
-                    logger.info("Was created profile");
+                    this.logger.saveLog(LogLvls.INFO,"Was created profile");
                 } catch (ProfileException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case CHOICE_PROFILE:
@@ -228,22 +232,29 @@ public class Machine {
                 this.profiles.showProfileList();
                 int profileId = stream.nextInt();
                 this.activeProfile = this.profiles.getProfile(profileId - 1);
-                logger.info(String.format("Was choice profile <%s>", this.activeProfile.getName()));
+                this.logger.saveLog(LogLvls.INFO, String.format("Was choice profile <%s>", this.activeProfile.getName()));
+                break;
+            case SHOW_HISTORY:
+                try {
+                    this.logger.getHistoryByKeyWord("Was cooked.+");
+                } catch (MachineException e) {
+                    this.logger.sendErrResponse(e);
+                }
                 break;
             case MAKE_ESPRESSO:
                 try {
                     result = this.adapterServeBeverage(Drink.ESPRESSO);
-                    logger.info(String.format("Was cooked <%s>", result));
+                    this.logger.saveLog(LogLvls.INFO, String.format("Was cooked <%s> for %s", result, this.activeProfile.getName()));
                 } catch (MachineException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case MAKE_CAPPUCCINO:
                 try {
                     result = this.adapterServeBeverage(Drink.CAPPUCCINO);
-                    logger.info(String.format("Was cooked <%s>", result));
+                    this.logger.saveLog(LogLvls.INFO, String.format("Was cooked <%s> for %s", result, this.activeProfile.getName()));
                 } catch (MachineException e) {
-                    sendErrResponse(e);
+                    this.logger.sendErrResponse(e);
                 }
                 break;
             case EXIT_PROFILE:
@@ -256,10 +267,10 @@ public class Machine {
         System.out.println("Enter the number of the corresponding command: ");
         for (Beverage beverage : this.beverageList.getBeverageList()) {
             if (this.activeProfile.isBeverageAtList(beverage)) {
-                System.out.printf("%d - %s\n", (11+beverage.getName().ordinal()), beverage.getName());
+                System.out.printf("%d - %s\n", (12+beverage.getName().ordinal()), beverage.getName());
             }
         }
-        System.out.println("13 - Exit profile\n");
+        System.out.println("14 - Exit profile\n");
     }
 
     private boolean loadMainMenu() {

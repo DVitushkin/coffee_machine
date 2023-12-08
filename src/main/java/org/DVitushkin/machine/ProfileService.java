@@ -73,11 +73,14 @@ public class ProfileService {
     }
 
     public void createProfile(BeverageService beverageList) throws ProfileException {
-        System.out.println("Enter name for profile");
-        String name = this.stream.nextLine();
-        name = this.stream.nextLine();
+        System.out.println("Enter name for profile:");
+        String name = this.stream.next();
 
-        Profile newProfile = new Profile(name);
+        System.out.println("Enter how cup do you want:");
+        int cupCount = Integer.parseInt(this.stream.next());
+
+        Profile newProfile = new Profile(name, cupCount);
+
         try {
             this.addBeverageToProfile(newProfile, beverageList);
         } catch (ProfileException e) {

@@ -10,14 +10,11 @@ import java.util.List;
 public class Profile {
     private final String name;
     private final List<Beverage> pinnedBeverage;
+    private final int cupCount;
 
-    public Profile(String name, List<Beverage> beverageList) {
+    public Profile(String name, int cupCount) {
         this.name = name;
-        this.pinnedBeverage = beverageList;
-    }
-
-    public Profile(String name) {
-        this.name = name;
+        this.cupCount = cupCount;
         this.pinnedBeverage = new ArrayList<Beverage>();
     }
 
@@ -26,7 +23,11 @@ public class Profile {
     }
 
     public List<Beverage> getPinnedBeverage() {
-        return this.pinnedBeverage;
+        return pinnedBeverage;
+    }
+
+    public int getCupCount() {
+        return cupCount;
     }
 
     public void addBeverage(Beverage newBvg) throws ProfileException {

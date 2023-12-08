@@ -11,9 +11,11 @@ public enum Controls {
     SHOW_RECIPE(8),
     CREATE_PROFILE(9),
     CHOICE_PROFILE(10),
-    MAKE_ESPRESSO(11),
-    MAKE_CAPPUCCINO(12),
-    EXIT_PROFILE(13);
+    SHOW_HISTORY(11),
+    MAKE_ESPRESSO(12),
+    MAKE_CAPPUCCINO(13),
+    EXIT_PROFILE(14);
+
 
     private final int cid;
 
