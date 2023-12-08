@@ -159,7 +159,7 @@ public class Machine {
         switch (Objects.requireNonNull(cmd)) {
             case START_MACHINE:
                 this.switchOnOf();
-                this.logger.saveLog(LogLvls.INFO, "Button was pushed");
+                this.logger.saveLog(LogLvls.INFO, String.format("Button was turn to %s", this.onOffButton));
                 break;
             case ADD_WATER:
                 System.out.println("Please enter count of ingredient");
@@ -194,6 +194,7 @@ public class Machine {
             case CHECK_SYSTEM:
                 System.out.printf("How is %d cleanliness\n", this.cleanliness);
                 this.ingredientList.showIngredients();
+                this.logger.saveLog(LogLvls.INFO, "Was shown state of system");
                 break;
             case CLEAN_MACHINE:
                 try {
@@ -258,6 +259,7 @@ public class Machine {
                 }
                 break;
             case EXIT_PROFILE:
+                this.logger.saveLog(LogLvls.INFO, String.format("Log out from <%s> profile", this.activeProfile.getName()));
                 this.activeProfile = null;
                 break;
         }
@@ -289,6 +291,7 @@ public class Machine {
     public void entryPoint() {
         try {
             this.greeting();
+            this.logger.saveLog(LogLvls.INFO, String.format("Button was turn to %s", this.onOffButton));
         } catch (MachineException e) {
             System.out.println(e.getMessage());
             System.exit(0);
